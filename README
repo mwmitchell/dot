@@ -1,0 +1,50 @@
+Start=Dot
+Dot, another mini-framework experiment for Ruby and Rack
+
+==Example
+
+In a file called my_app.rb, put the following
+
+	require 'dot'
+
+	class MyApp
+  
+	  include Dot::App
+  
+	  map '', :			index
+	  map 'status', 	:type
+  
+	  def index
+	    'My app has action!'
+	  end
+  
+	  def status
+	    throw(:halt, :status=>500, :body=>'type param required!') unless @request.params['type']
+		"Status for #{@request.params['type]}..."
+	  end
+  
+	end
+
+Go to the directory where you saved your my_app.rb file.
+
+Create a config.ru file like:
+	
+	require 'my_app.rb'
+	run MyApp.new
+
+Start the server:
+	
+	rackup
+
+Now "browse" to:
+	
+	http://localhost:9292/
+	http://localhost:9292/status?type=txn
+	http://localhost:9292/status
+
+Say, "wow, big deal". Or, hey now I an create mini-ruby web apps with relative ease!
+
+==Other cool Ruby mini-frameworks
+
+	Camping
+	Sinatra
