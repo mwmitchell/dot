@@ -66,7 +66,7 @@ module Dot
         @mapping||=[]
       end
     
-      def map(path, action, options={})
+      def map(action, path='', options={})
         options[:rules]||={}
         mapping << {:path=>path, :action=>action, :options=>options}
       end
@@ -84,50 +84,79 @@ module Dot
       
     end
     
-    [:request, :response, :action, :path_info].each {|a| attr a}
+    [:request, :response, :action, :context_path, :route].each {|a| attr a}
     
     def options
       self.class.options
     end
     
     def call(env)
-      @request = Rack::Request.new(env)
-      @path_info = @request.path_info.sub(/^\/+/, '').sub(/\/+$/, '')
-      @response = Rack::Response.new
-      @response.headers['Content-Type'] = 'text/plain'
-      @response.status==200
-      @action=nil
+      exec!(Rack::Request.new(env), Rack::Response.new)
+    end
+    
+    protected
+    
+    def find_matching_route
       m = self.class.mapping.sort {|a,b| b[:path].length <=> a[:path].length}
       m.each do |r|
-        pm = Dot::PathMatcher.new(r[:path], r[:options])
-        if params = pm.resolve(@path_info)
-          @request.params.merge!(params)
-          @action=r[:action]
-          break
+        if params = Dot::PathMatcher.new(r[:path], r[:options]).resolve(@context_path)
+          return [r, params]
         end
       end
-      
+      false
+    end
+    
+    # sets the request, response routes etc.
+    def prepare!(request, response, context_path=nil)
+      @request = request
+      @response = response
+      @context_path = (context_path || @request.path_info).sub(/^\/+/, '').sub(/\/+$/, '')
+      @action=nil
+      @route, params = find_matching_route
+      if @route
+        @request.params.merge!(params) if params
+        @action = @route[:action]
+      end
+    end
+    
+    # the main, root class execution point
+    def exec!(request, response)
+      prepare!(request, response)
       run_safely do
-        handle_result(
+        handle_action_result(
           catch(:halt) do
-            if @action.nil? || ! respond_to?(@action)
-              throw :halt, :status=>404, :body=>'Not Found'
-            end
-            begin
-              method(@action).call
-            rescue
-              throw :halt, :status=>500, :body=>"Server Error: #{$!}"
-            end
+            execute_action!
           end
         )
       end
       @response.finish
     end
     
-    protected
+    # attempts execution of the current @action
+    def execute_action!
+      if @action.nil? || ! respond_to?(@action)
+        throw :halt, :status=>404, :body=>'Not Found'
+      end
+      begin
+        catch :forward do |a, app|
+          method(@action).call
+        end
+      rescue
+        throw :halt, :status=>500, :body=>"Server Error: #{$!}"
+      end
+    end
     
-    #
-    def handle_result(result)
+    # allows an action in one class to pass the request to another
+    # the fragments of the current @context_path are changed based on the current route depth
+    def forward_to(klass)
+      start = @route[:path].split('/').size
+      handler = klass.new
+      handler.prepare!(@request, @response, @context_path.split('/')[start..-1].join('/'))
+      handler.execute_action!
+    end
+    
+    # figures out what to do with a response from an action (or :halt) result
+    def handle_action_result(result)
       @response.write result if result.is_a?(String)
       if result.is_a?(Hash)
         @response.write result[:body] if result[:body]
