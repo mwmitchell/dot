@@ -12,7 +12,7 @@ In a file called my_app.rb, put the following
 		include Dot::App
 
 		map :index
-		map :type, 'status'
+		map :status, 'status/:type', :rules=>{:type=>/\d+/}, :defaults=>{:type=>1}
 		map :foward, 'forward'
 
 		def index
@@ -52,10 +52,11 @@ Start the server:
 Now "browse" to:
 	
 	http://localhost:9292/
-	http://localhost:9292/status?type=txn
-	http://localhost:9292/status
+	http://localhost:9292/status/100
+	http://localhost:9292/status (bad request)
+	http://localhost:9292/foward
 
-Say, "wow, big deal". Or, hey now I an create mini-ruby web apps with relative ease!
+Say, "wow, big deal". Or, hey now I can create mini-ruby web apps with relative ease!
 
 ==Other cool Ruby mini-frameworks
 
