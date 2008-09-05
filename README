@@ -8,21 +8,34 @@ In a file called my_app.rb, put the following
 	require 'dot'
 
 	class MyApp
-  
-	  include Dot::App
-  
-	  map '', :			index
-	  map 'status', 	:type
-  
-	  def index
-	    'My app has action!'
-	  end
-  
-	  def status
-	    throw(:halt, :status=>500, :body=>'type param required!') unless @request.params['type']
-		"Status for #{@request.params['type]}..."
-	  end
-  
+
+		include Dot::App
+
+		map :index
+		map :type, 'status'
+		map :foward, 'forward'
+
+		def index
+			'My app has action!'
+		end
+
+		def status
+			throw(:halt, :status=>500, :body=>'type param required!') unless @request.params['type']
+			"Status for #{@request.params['type]}..."
+		end
+		
+		def forward
+			forward_to MySubApp
+		end
+		
+	end
+
+	class MySubApp
+		include Dot::App
+		map :index
+		def index
+			self.class.to_s
+		end
 	end
 
 Go to the directory where you saved your my_app.rb file.
