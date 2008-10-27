@@ -1,5 +1,5 @@
-Start=Dot
-Dot, another mini-framework experiment for Ruby and Rack
+=Dot
+Another (!) mini-framework experiment for Ruby and Rack.
 
 ==Example
 
@@ -55,8 +55,6 @@ Now "browse" to:
 	http://localhost:9292/status/100
 	http://localhost:9292/status (bad request)
 	http://localhost:9292/foward
-
-Say, "wow, big deal". Or, hey now I can create mini-ruby web apps with relative ease!
 
 ==Other cool Ruby mini-frameworks
 

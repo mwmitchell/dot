@@ -17,8 +17,7 @@ module App
     end
     
     def admin
-      admin_response = forward_to Admin
-      "<h1>Admin</h2>#{admin_response}"
+      "<h1>Admin</h2>#{forward_to(Admin)}"
     end
     
   end

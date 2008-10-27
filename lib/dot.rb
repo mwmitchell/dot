@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'rack'
+
 module Dot
   
   #
@@ -36,6 +39,8 @@ module Dot
       end
       self.defaults.merge(params) unless params.nil?
     end
+    
+    protected
     
     def match?(param, value)
       value =~ (self.rules[param] || self.default_rule)
@@ -178,6 +183,10 @@ module Dot
         yield
       end
     end
+    
+  end
+  
+  module Renderer
     
   end
   
